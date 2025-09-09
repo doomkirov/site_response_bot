@@ -12,7 +12,7 @@ git/
 .idea/
 .vscode/
 
-settings/.env
+.env
 
 
 # OS files

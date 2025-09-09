@@ -1,44 +1,56 @@
-from sqlalchemy import Column, BigInteger, Integer, ForeignKey, String
+from sqlalchemy import Column, BigInteger, Integer, String, Table, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.schema import UniqueConstraint
 
 from settings.database import Base
 
-class User(Base):
-    __tablename__ = 'users'
+user_links = Table(
+    "user_links",
+    Base.metadata,
+    Column("user_id", BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("link_id", Integer, ForeignKey("links.id", ondelete="CASCADE"), primary_key=True),
+    UniqueConstraint("user_id", "link_id", name="uq_user_link"),
+)
 
-    # Primary key — telegram id
+
+class UserModel(Base):
+    __tablename__ = "users"
+
     id = Column(BigInteger, primary_key=True)
 
-    # Связь один-ко-многим с таблицей ссылок
-    links = relationship("Link", back_populates="user", cascade="all, delete-orphan")
+    # удалили JSON поле links и заменили его отношением
+    links = relationship(
+        "LinksModel",
+        secondary=user_links,
+        back_populates="users",
+        lazy="selectin",  # удобно для чтения
+        cascade="save-update",
+    )
+
+    send_results = Column(Integer, default=0)
 
     class Config:
         orm_mode = True
 
 
-class Link(Base):
-    __tablename__ = 'links'
+class LinksModel(Base):
+    __tablename__ = "links"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    url = Column(String, nullable=False, unique=True)
 
-    # Foreign key на пользователя
-    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False)
-    user = relationship("User", back_populates="links")
-
-    # Сама ссылка
-    url = Column(String, nullable=False)
-
-    # Время последней проверки (Unix timestamp)
     last_checked = Column(BigInteger, default=0)
-
-    # Последний полученный статус
     last_status = Column(Integer, default=0)
-
-    # Время последней ошибки (Unix timestamp)
+    last_error_status = Column(Integer, default=0)
     last_error_time = Column(BigInteger, default=0)
-
-    # Время последнего успеха (status 200)
     last_success_time = Column(BigInteger, default=0)
+
+    users = relationship(
+        "UserModel",
+        secondary=user_links,
+        back_populates="links",
+        lazy="selectin",
+    )
 
     class Config:
         orm_mode = True
