@@ -13,5 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем код бота
 COPY . .
 
+ENV PYTHONPATH=/site_response_bot
+
 # Запускаем бота
-CMD alembic upgrade head && python app/main.py
+CMD ["python", "app/main.py"]
