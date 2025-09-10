@@ -33,7 +33,7 @@ def get_start_menu_keyboard(send_results: int) -> InlineKeyboardMarkup:
         0,
         [InlineKeyboardButton(
             text=text,
-            callback_data=f"user_change_notifications"
+            callback_data=f"user_change_notifications_{send_results}"
         )]
     )
     return keyboard

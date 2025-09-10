@@ -1,15 +1,36 @@
 import asyncio
+import traceback
 
+from app.checker import validate_data
 from bot_operations.bot_main import run_bot
+from db_operations.links_dao.links_dao import LinksDAO
+from logger.logger import logger
 
 
 async def main():
-    pass
+    links = await LinksDAO.get_column('url')
+    tasks: list = []
+    for link in links:
+        tasks.append(validate_data(link))
+    await asyncio.gather(*tasks)
+
+async def periodic_main(interval: int = 30):
+    """Запускает main() строго каждые interval секунд (от старта)"""
+    while True:
+        try:
+            start = asyncio.get_event_loop().time()  # время начала
+            await main()
+            elapsed = asyncio.get_event_loop().time() - start
+            sleep_time = max(0, interval - int(elapsed))
+            await asyncio.sleep(sleep_time)
+        except Exception as er:
+            logger.warning(er)
+            logger.warning(traceback.format_exc())
 
 
 async def main_wrapper():
     await asyncio.gather(
-        main(),
+        periodic_main(),
         run_bot()
     )
 

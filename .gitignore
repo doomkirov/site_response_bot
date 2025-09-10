@@ -13,7 +13,7 @@ git/
 .vscode/
 
 .env
-
+.idea
 
 # OS files
 .DS_Store
@@ -21,7 +21,8 @@ Thumbs.db
 
 # Log files
 *.log
-data_files/*.log
+logs/
+logs/*.log
 result/
 
 # Environment variables

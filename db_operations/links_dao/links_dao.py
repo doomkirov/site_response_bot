@@ -1,13 +1,14 @@
 # db_operations/links_dao.py
-from sqlalchemy import select, delete, exists, and_
+from sqlalchemy import select, delete, exists, and_, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
+from db_operations.base_dao import BaseDao
 from settings.database import async_session_maker
 from db_operations.all_models import LinksModel, user_links  # user_links — association Table
 
 
-class LinksDAO:
+class LinksDAO(BaseDao):
     model = LinksModel
 
     @classmethod
@@ -72,3 +73,34 @@ class LinksDAO:
             except SQLAlchemyError:
                 await session.rollback()
                 raise
+
+    @classmethod
+    async def update_fields_by_url_simple(cls, url: str, **fields) -> int:
+        if not fields:
+            raise ValueError("Нет полей для обновления")
+
+        # Оставляем только те, что существуют в модели (проверка через hasattr)
+        payload = {}
+        for name, value in fields.items():
+            if hasattr(cls.model, name):
+                payload[name] = value
+            else:
+                raise ValueError(f"В модели {cls.model.__name__} нет атрибута '{name}'")
+
+        if not payload:
+            raise ValueError("Нет допустимых полей для обновления")
+
+        stmt = (
+            update(cls.model)
+            .where(cls.model.url == url)
+            .values(**payload)
+            .execution_options(synchronize_session="fetch")
+        )
+
+        try:
+            async with async_session_maker() as session:
+                result = await session.execute(stmt)
+                await session.commit()
+                return result.rowcount
+        except SQLAlchemyError:
+            raise

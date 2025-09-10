@@ -18,12 +18,11 @@ class UserModel(Base):
 
     id = Column(BigInteger, primary_key=True)
 
-    # удалили JSON поле links и заменили его отношением
     links = relationship(
         "LinksModel",
         secondary=user_links,
         back_populates="users",
-        lazy="selectin",  # удобно для чтения
+        lazy="selectin",
         cascade="save-update",
     )
 
