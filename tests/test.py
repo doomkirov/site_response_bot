@@ -1,12 +1,3 @@
-from pprint import pprint
-
-from bot_operations.bot_support.keyboards import create_links_keyboard
-
-def test1():
-    links = ['abc','def']
-    awa = create_links_keyboard(links, 2)
-    pprint(awa.inline_keyboard)
-
 def test2():
     def split_by_size(seq, row_width=3):
         return [seq[i:i + row_width] for i in range(0, len(seq), row_width)]
