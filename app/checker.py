@@ -4,6 +4,7 @@ import aiohttp, ssl, time
 from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 
 from app.app_support.response_data_class import ResponseData
+from bot_operations.bot_support.keyboards import back_to_single_link_operations_keyboard
 from db_operations.all_models import LinksModel
 from db_operations.links_dao.links_dao import LinksDAO
 from db_operations.user_dao.user_dao import UserDAO
@@ -19,7 +20,8 @@ async def send_user_message(user_id: int, data: ResponseData):
             f'Статус-код ответа у сайта {data.url} изменился!\n'
             f'Новый код - {data.status_code}\n\n'
             f'{data.explanation}',
-            disable_web_page_preview=True
+            disable_web_page_preview=True,
+            reply_markup=back_to_single_link_operations_keyboard(data.url)
         )
         logger.debug(f"Пользователь {user_id} доступен ✅")
         return True
@@ -64,23 +66,26 @@ async def get_status_code(url: str):
         return ResponseData(url, status_code=999,
                             explanation = str(e))
 
-async def validate_data(url: str):
+async def validate_data(links_object: LinksModel, user_bulk_id: int = 0):
+    url = links_object.url
     data: ResponseData = await get_status_code(url)
     timestamp = time.time()
-    links_object: LinksModel = await LinksDAO.find_one_or_none(url=url)
     last_success_time = links_object.last_success_time
     last_error_status = links_object.last_error_status
     last_error_time = links_object.last_error_time
-    all_users = links_object.users
-    if not all_users:
-        await LinksDAO.delete_row('url', url)
-        return
-    user_ids = [user.id for user in all_users if getattr(user, "send_results", 0) == 1]
-    tasks: list = []
-    if data.status_code not in (0, links_object.last_status):
-        for user_id in user_ids:
-            tasks.append(send_user_message(user_id, data))
-        await asyncio.gather(*tasks)
+    if not user_bulk_id:
+        all_users = links_object.users
+        if not all_users:
+            await LinksDAO.delete_row('url', url)
+            return
+        user_ids = [user.id for user in all_users if getattr(user, "send_results", 0) == 1]
+        tasks: list = []
+        if data.status_code not in (0, links_object.last_status):
+            for user_id in user_ids:
+                tasks.append(send_user_message(user_id, data))
+            await asyncio.gather(*tasks)
+    else:
+        await send_user_message(user_bulk_id, data)
     if data.status_code == 200:
         last_success_time = timestamp
     else:

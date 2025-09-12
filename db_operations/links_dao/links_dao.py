@@ -62,7 +62,13 @@ class LinksDAO(BaseDao):
         async with async_session_maker() as session:
             try:
                 # условие: для каждой ссылки не существует записи в user_links с таким link_id
-                orphan_cond = ~exists(select(user_links.c.link_id).where(and_(user_links.c.link_id == LinksModel.id)))
+                orphan_cond = (
+                    ~exists(
+                        select(user_links.c.link_id)
+                        .where(
+                            cast("ColumnElement[bool]", user_links.c.link_id == LinksModel.id)
+                        ))
+                )
 
                 del_stmt = (
                     delete(LinksModel)

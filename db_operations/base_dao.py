@@ -1,3 +1,5 @@
+from typing import cast
+
 from pydantic import with_config
 from sqlalchemy import select, insert, and_, delete, update
 from sqlalchemy.exc import IntegrityError
@@ -93,7 +95,11 @@ class BaseDao:
 
         async with async_session_maker() as session:
             column_attr = getattr(cls.model, filter_field)
-            stmt = update(cls.model).where(column_attr == filter_value).values(**kwargs).returning(cls.model)
+            stmt = (
+                update(cls.model)
+                .where(cast("ColumnElement[bool]", column_attr == filter_value))
+                .values(**kwargs).returning(cls.model)
+            )
             result = await session.execute(stmt)
             await session.commit()
             obj = result.scalar_one_or_none()

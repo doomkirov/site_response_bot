@@ -3,15 +3,16 @@ import traceback
 
 from app.checker import validate_data
 from bot_operations.bot_main import run_bot
+from db_operations.all_models import LinksModel
 from db_operations.links_dao.links_dao import LinksDAO
 from logger.logger import logger
 
 
 async def main():
-    links = await LinksDAO.get_column('url')
+    links_objects: list[LinksModel] = await LinksDAO.find_all()
     tasks: list = []
-    for link in links:
-        tasks.append(validate_data(link))
+    for l_object in links_objects:
+        tasks.append(validate_data(l_object))
     await asyncio.gather(*tasks)
 
 async def periodic_main(interval: int = 30):

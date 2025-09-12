@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, cast
 
 from sqlalchemy import select, delete, and_
 from sqlalchemy.orm import selectinload
@@ -103,7 +103,25 @@ class UserDAO(BaseDao):
         """
         async with async_session_maker() as session:
             try:
-                stmt = delete(user_links).where(and_(user_links.c.user_id == user_id))
+                stmt = (
+                    delete(user_links)
+                    .where(cast("ColumnElement[bool]", user_links.c.user_id == user_id))
+                )
+                await session.execute(stmt)
+                await session.commit()
+            except SQLAlchemyError:
+                await session.rollback()
+                raise
+
+    @classmethod
+    async def delete_link(cls, user_id: int, url: str):
+        async with async_session_maker() as session:
+            try:
+                link_model: LinksModel = await session.execute(select(LinksModel).where(LinksModel.url.in_(url)))
+                stmt = (
+                    delete(user_links)
+                    .where(and_(user_links.c.user_id == user_id, user_links.c.link_id == link_model.id))
+                )
                 await session.execute(stmt)
                 await session.commit()
             except SQLAlchemyError:
