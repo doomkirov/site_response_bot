@@ -1,4 +1,5 @@
-# db_operations/links_dao.py
+from typing import cast
+
 from sqlalchemy import select, delete, exists, and_, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -104,3 +105,19 @@ class LinksDAO(BaseDao):
                 return result.rowcount
         except SQLAlchemyError:
             raise
+
+    @classmethod
+    async def get_user_links(cls, user_id: int) -> list[str]:
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(cls.model.url)
+                .join(user_links, cls.model.id == user_links.c.link_id)
+                .where(
+                    cast(
+                        "ColumnElement[bool]",
+                        user_links.c.user_id == user_id
+                    )
+                )
+                .order_by(cls.model.id.desc())  # сортировка по id DESC
+            )
+            return result.scalars().all()

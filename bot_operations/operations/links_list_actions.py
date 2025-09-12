@@ -34,7 +34,7 @@ async def add_link_to_list(callback: CallbackQuery, state: FSMContext):
 @commands_router.callback_query(F.data == 'show_all_links')
 async def show_all_links(callback: CallbackQuery):
     user_id = callback.from_user.id
-    links = await UserDAO.get_user_links(user_id)
+    links = await LinksDAO.get_user_links(user_id)
     text = 'Ваши сайты для проверки:'
     if not links:
         text += '\nНет ни одной ссылки.'

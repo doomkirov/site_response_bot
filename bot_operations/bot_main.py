@@ -7,8 +7,9 @@ from db_operations.all_models import UserModel
 from db_operations.user_dao.user_dao import UserDAO
 from settings.settings import settings
 from aiogram.fsm.storage.memory import MemoryStorage
-from bot_operations.operations import notifications, links_list_actions # noqa Необходимы для работы диспатчера
-from app import tester  # noqa Необходимы для работы диспатчера
+# 👇 Необходимы для работы диспатчера
+from bot_operations.operations import notifications, links_list_actions, single_link_actions # noqa
+# расскомментить на случай тестов from app import tester  # noqa
 
 bot = Bot(token=settings.BOT_TOKEN)
 

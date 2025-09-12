@@ -109,16 +109,3 @@ class UserDAO(BaseDao):
             except SQLAlchemyError:
                 await session.rollback()
                 raise
-
-    @classmethod
-    async def get_user_links(cls, user_id: int) -> List[str]:
-        async with async_session_maker() as session:
-            q = await session.execute(
-                select(cls.model)
-                .options(selectinload(cls.model.links))
-                .filter_by(id=user_id)
-            )
-            user = q.scalar_one_or_none()
-            if not user:
-                return []
-            return [link.url for link in user.links]

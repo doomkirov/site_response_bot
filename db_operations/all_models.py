@@ -24,6 +24,7 @@ class UserModel(Base):
         back_populates="users",
         lazy="selectin",
         cascade="save-update",
+        order_by="LinksModel.id.desc()"
     )
 
     send_results = Column(Integer, default=0)

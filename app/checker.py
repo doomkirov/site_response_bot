@@ -8,6 +8,7 @@ from db_operations.all_models import LinksModel
 from db_operations.links_dao.links_dao import LinksDAO
 from db_operations.user_dao.user_dao import UserDAO
 from logger.log_decorator import log_execution_time
+from logger.logger import logger
 
 
 async def send_user_message(user_id: int, data: ResponseData):
@@ -20,21 +21,21 @@ async def send_user_message(user_id: int, data: ResponseData):
             f'{data.explanation}',
             disable_web_page_preview=True
         )
-        print(f"Пользователь {user_id} доступен ✅")
+        logger.debug(f"Пользователь {user_id} доступен ✅")
         return True
     except TelegramForbiddenError:
         # Бот заблокирован пользователем
-        print(f"Пользователь {user_id} заблокировал бота ❌")
+        logger.info(f"Пользователь {user_id} заблокировал бота ❌")
         await UserDAO.change_value_in_row('id', user_id, send_notifications=0)
         return False
     except TelegramBadRequest as e:
         # Например, если пользователь удалил аккаунт
-        print(f"Проблема с пользователем {user_id}: {e}")
+        logger.error(f"Проблема с пользователем {user_id}: {e}")
         await UserDAO.change_value_in_row('id', user_id, send_notifications=0)
         return False
     except Exception as e:
         # Любая другая ошибка
-        print(f"Не удалось отправить сообщение: {e}")
+        logger.warning(f"Не удалось отправить сообщение: {e}")
         return False
 
 @log_execution_time

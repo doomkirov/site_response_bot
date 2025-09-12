@@ -33,7 +33,7 @@ class BaseDao:
             column_attr = getattr(cls.model, column, None)
             if column_attr is None:
                 raise ValueError(f"В модели {cls.model.__name__} нет колонки '{column}'")
-            query = select(column_attr)
+            query = select(column_attr).order_by(cls.model.id.desc())
             result = await session.execute(query)
             return [row[0] for row in result.all()]
 
