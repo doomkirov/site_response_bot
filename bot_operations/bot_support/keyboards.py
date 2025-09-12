@@ -1,9 +1,5 @@
-from optparse import Option
-from typing import Optional
-
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from db_operations.all_models import UserModel
 ROW_WIDTH_PARAMETER: int = 2
 
 delete_all_links_keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -27,33 +23,34 @@ user_links_actions_keyboard = InlineKeyboardMarkup(inline_keyboard=[
 
 def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) -> InlineKeyboardMarkup:
     # Первый ряд
-    keyboard: list = [[list[InlineKeyboardButton]]]
+    keyboard: list[list[InlineKeyboardButton]] = []
     buttons = [InlineKeyboardButton(text=url, callback_data=f"link_structure_url:{url}") for url in links]
 
     # Добавляем все кнопки одним вызовом
     # Второй ряд
     if buttons:
-        for button in buttons:
-            keyboard.append(button)
+        keyboard.append(buttons)
     else:
         keyboard.append(
             [InlineKeyboardButton(text="В начало", callback_data=f"show_next_link_keyboard:0")]
         )
 
-    row = []
+    keyboard.append([])
     if next_from_id > ROW_WIDTH_PARAMETER:
-        row.append(
+        keyboard[1].append(
             InlineKeyboardButton(
                 text="Назад",
                 callback_data=f"show_next_link_keyboard:{next_from_id-ROW_WIDTH_PARAMETER}"
             )
         )
-    if len(buttons) >= ROW_WIDTH_PARAMETER:
-        row.append(InlineKeyboardButton(
+    if len(buttons) == ROW_WIDTH_PARAMETER:
+        keyboard[1].append(InlineKeyboardButton(
             text="Далее",
             callback_data=f"show_next_link_keyboard:{next_from_id}"
         ))
-    keyboard.append(*row)
+    if not keyboard[1]:
+        del keyboard[1]
+
 
     # Третий ряд (одна кнопка)
     keyboard.append([
