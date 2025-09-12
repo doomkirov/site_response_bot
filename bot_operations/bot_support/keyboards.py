@@ -34,7 +34,8 @@ def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) 
     # Добавляем все кнопки одним вызовом
     # Второй ряд
     if buttons:
-        keyboard.inline_keyboard.append(*buttons)
+        for button in buttons:
+            keyboard.inline_keyboard.append(button)
     else:
         keyboard.inline_keyboard.append(
             [InlineKeyboardButton(text="В начало", callback_data=f"show_next_link_keyboard:0")]
