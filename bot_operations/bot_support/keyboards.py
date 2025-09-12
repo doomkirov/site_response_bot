@@ -79,19 +79,19 @@ def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) 
 
     keyboard.append([])
     if next_from_id > ROW_WIDTH_PARAMETER:
-        keyboard[1].append(
+        keyboard[-1].append(
             InlineKeyboardButton(
                 text="Назад",
                 callback_data=f"show_next_link_keyboard:{next_from_id-ROW_WIDTH_PARAMETER**2}"
             )
         )
     if len(links) == ROW_WIDTH_PARAMETER*ROW_COUNT_PARAMETER:
-        keyboard[1].append(InlineKeyboardButton(
+        keyboard[-1].append(InlineKeyboardButton(
             text="Далее",
             callback_data=f"show_next_link_keyboard:{next_from_id}"
         ))
-    if not keyboard[1]:
-        del keyboard[1]
+    if not keyboard[-1]:
+        del keyboard[-1]
 
 
     # Третий ряд (одна кнопка)
