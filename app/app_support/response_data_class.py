@@ -89,11 +89,11 @@ class ResponseData:
         self.explanation = self.get_status_explanation() + explanation
 
     # Пример простого helper'а:
-    def get_status_explanation(self) -> str:
+    def get_status_explanation(self, status_code: int = 0) -> str:
         """
         Возвращает объяснение для HTTP-кода; если кода нет в словаре — возвращает нейтральное сообщение.
         """
         return self.http_status_explain.get(
-            self.status_code,
+            self.status_code if not status_code else status_code,
             f"HTTP {self.status_code} — неизвестный или нестандартный статус; проверьте тело ответа и заголовки."
         )

@@ -68,7 +68,7 @@ def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) 
         buttons = [
             InlineKeyboardButton(
                 text=url,
-                callback_data=f"link_structure_url:{url}~~|~~{next_from_id-ROW_WIDTH_PARAMETER**2}") for url in row
+                callback_data=f"link_structure_url:{url}~~|~~{max(next_from_id-ROW_WIDTH_PARAMETER*ROW_COUNT_PARAMETER, 0)}") for url in row
         ]
         if buttons:
             keyboard.append(buttons)
@@ -82,7 +82,7 @@ def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) 
         keyboard[-1].append(
             InlineKeyboardButton(
                 text="Назад",
-                callback_data=f"show_next_link_keyboard:{next_from_id-ROW_WIDTH_PARAMETER**2}"
+                callback_data=f"show_next_link_keyboard:{max(next_from_id-(ROW_WIDTH_PARAMETER*ROW_COUNT_PARAMETER)*2, 0)}"
             )
         )
     if len(links) == ROW_WIDTH_PARAMETER*ROW_COUNT_PARAMETER:
