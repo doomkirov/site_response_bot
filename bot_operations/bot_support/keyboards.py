@@ -78,7 +78,7 @@ def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) 
         )
 
     keyboard.append([])
-    if next_from_id > ROW_WIDTH_PARAMETER:
+    if next_from_id > ROW_WIDTH_PARAMETER*ROW_COUNT_PARAMETER:
         keyboard[-1].append(
             InlineKeyboardButton(
                 text="Назад",
