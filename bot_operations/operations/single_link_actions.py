@@ -25,12 +25,12 @@ async def show_single_link(callback_query: CallbackQuery, next_from_id: int = 0)
         if not links_to_keyboard:
             await callback_query.message.edit_text(
                 'Конец списка. Вернитесь в начало.',
-                reply_markup=create_links_keyboard(links_to_keyboard, (min(len(links_to_keyboard), max_links)))
+                reply_markup=create_links_keyboard(links_to_keyboard, next_from_id=next_from_id+len(links_to_keyboard))
             )
             return
         await callback_query.message.edit_text(
             'Список ваших ссылок для отслеживания статуса',
-            reply_markup=create_links_keyboard(links_to_keyboard, (min(len(links_to_keyboard), max_links)))
+            reply_markup=create_links_keyboard(links_to_keyboard, next_from_id=next_from_id+len(links_to_keyboard))
         )
     except Exception as e:
         await callback_query.answer()

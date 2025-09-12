@@ -47,7 +47,7 @@ jobs:
               -e BOT_TOKEN=${{ secrets.BOT_TOKEN }} \
               doomkirov/site_response_bot:latest alembic upgrade head
 
-            docker run -d --name site_response_bot --network host \
+            docker run -d --name site_response_bot --restart on-failure:10 --network host \
               -e DB_HOST=${{ secrets.DB_HOST }} \
               -e DB_PORT=${{ secrets.DB_PORT }} \
               -e DB_USER=${{ secrets.DB_USER }} \

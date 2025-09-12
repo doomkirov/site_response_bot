@@ -117,7 +117,9 @@ class UserDAO(BaseDao):
     async def delete_link(cls, user_id: int, url: str):
         async with async_session_maker() as session:
             try:
-                link_model: LinksModel = await session.execute(select(LinksModel).where(LinksModel.url.in_(url)))
+                link_model: LinksModel = await session.execute(
+                    select(LinksModel).where(LinksModel.url == url)
+                ).scalar_one_or_none()
                 stmt = (
                     delete(user_links)
                     .where(and_(user_links.c.user_id == user_id, user_links.c.link_id == link_model.id))

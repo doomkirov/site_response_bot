@@ -27,7 +27,8 @@ async def links_list_actions_for_user(callback: CallbackQuery, state: FSMContext
 async def bad_links(callback: CallbackQuery):
     try:
         user_id = callback.from_user.id
-        links: list[LinksModel]  = await LinksDAO.get_user_links(user_id)
+        user_obj: UserModel  = await UserDAO.find_by_id(model_id=user_id)
+        links: list[LinksModel] = user_obj.links
         bad_links_list = []
         for link in links:
             if link.last_status != 200:

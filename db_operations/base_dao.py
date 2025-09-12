@@ -40,9 +40,15 @@ class BaseDao:
             return [row[0] for row in result.all()]
 
     @classmethod
-    async def find_all(cls):
+    async def find_all(cls, **filters):
         async with async_session_maker() as session:
             query = select(cls.model)
+
+            for field_name, value in filters.items():
+                column = getattr(cls.model, field_name, None)
+                if column is not None:
+                    query = query.where(cast("ColumnElement[bool]", column == value))
+
             result = await session.execute(query)
             return result.scalars().all()
 
