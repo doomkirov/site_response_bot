@@ -34,7 +34,7 @@ async def return_to_main_menu(callback: CallbackQuery):
     user: UserModel = await UserDAO.create_if_not_exists(id=user_id)
     await callback.message.edit_text(
         'Выберите действие!',
-        reply_markup=get_start_menu_keyboard(user.send_results)
+        reply_markup=get_start_menu_keyboard(user.send_results),
     )
 
 

@@ -1,3 +1,5 @@
+import traceback
+
 from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -8,9 +10,10 @@ from bot_operations.bot_support.keyboards import user_links_actions_keyboard, ba
     delete_all_links_keyboard
 from bot_operations.bot_support.states import LinkStates
 from bot_operations.bot_support.support_funcs import normalize_url, split_text_by_limit
-from db_operations.all_models import UserModel
+from db_operations.all_models import UserModel, LinksModel
 from db_operations.links_dao.links_dao import LinksDAO
 from db_operations.user_dao.user_dao import UserDAO
+from logger.logger import logger
 
 
 @commands_router.callback_query(F.data == 'links_list_actions_for_user')
@@ -20,6 +23,29 @@ async def links_list_actions_for_user(callback: CallbackQuery, state: FSMContext
         reply_markup=user_links_actions_keyboard
     )
     await state.clear()
+
+@commands_router.callback_query(F.data == 'bad_links')
+async def bad_links(callback: CallbackQuery):
+    try:
+        user_id = callback.from_user.id
+        links: list[LinksModel]  = await LinksDAO.get_user_links(user_id)
+        bad_links_list = []
+        for link in links:
+            if link.last_status != 200:
+                bad_links_list.append(str(link.last_status))
+        if bad_links_list:
+            await callback.message.edit_text(
+                'Список всех сломанных ссылок:\n' + '\n'.join(bad_links_list),
+                reply_markup=back_to_links_actions_keyboard,
+                disable_web_page_preview=True
+            )
+        else:
+            await callback.message.edit_text(
+                'Все отслеживаемые ссылки имеют текущий статус 200',
+                reply_markup=back_to_links_actions_keyboard
+            )
+    except Exception:
+        logger.warning(traceback.format_exc())
 
 @commands_router.callback_query(F.data == 'add_link_to_list')
 async def add_link_to_list(callback: CallbackQuery, state: FSMContext):

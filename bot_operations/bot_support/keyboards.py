@@ -14,6 +14,7 @@ back_to_links_actions_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="◀️ Назад к действиям со ссылками", callback_data="links_list_actions_for_user")],
 ])
 user_links_actions_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="◀️ Показать все ошибочные ссылки", callback_data="bad_links")],
     [InlineKeyboardButton(text="◀️ Добавить ссылку в список", callback_data="add_link_to_list")],
     [InlineKeyboardButton(text="◀️ Просмотреть весь список", callback_data="show_all_links")],
     [InlineKeyboardButton(text="◀️ Действия с отдельными ссылками", callback_data="show_single_link")],

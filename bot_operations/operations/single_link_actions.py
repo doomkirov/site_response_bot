@@ -3,13 +3,10 @@ import traceback
 from aiogram import F
 from aiogram.types import CallbackQuery
 
-from app.checker import validate_data
 from bot_operations.bot_support.base_router import commands_router
 from bot_operations.bot_support.keyboards import back_to_links_actions_keyboard, create_links_keyboard, \
     ROW_WIDTH_PARAMETER, ROW_COUNT_PARAMETER
-from db_operations.all_models import LinksModel
 from db_operations.links_dao.links_dao import LinksDAO
-from db_operations.user_dao.user_dao import UserDAO
 from logger.logger import logger
 
 
@@ -24,7 +21,7 @@ async def show_single_link(callback_query: CallbackQuery, next_from_id: int = 0)
             )
             return
         max_links = ROW_WIDTH_PARAMETER*ROW_COUNT_PARAMETER
-        links_to_keyboard = links_list[next_from_id:max_links]
+        links_to_keyboard = links_list[next_from_id:next_from_id+max_links]
         if not links_to_keyboard:
             await callback_query.message.edit_text(
                 'Конец списка. Вернитесь в начало.',

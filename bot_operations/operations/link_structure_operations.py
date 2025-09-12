@@ -20,7 +20,8 @@ async def link_structure_url(callback: CallbackQuery):
         await callback.message.edit_text(
             f'Произошла ошибка при обработке ссылки {url}\n'
             f'Свяжитесь с разработчиком',
-            reply_markup=back_to_links_actions_keyboard
+            reply_markup=back_to_links_actions_keyboard,
+            disable_web_page_preview=True
         )
         return
     url_data: ResponseData = ResponseData(url, url_object.last_status)
@@ -30,15 +31,15 @@ async def link_structure_url(callback: CallbackQuery):
         f'{url_data.get_status_explanation()}\n'
         f'Время последней проверки - '
         f'{format_unix_utc_plus3(url_object.last_checked) if url_object.last_checked != 0 else 'Нет данных'}\n\n'
-        f'{f'Последняя полученная ошибка - {url_object.last_error_status}\n' if url_object.last_status not in (url_object.last_error_status, 0) else ''}'
-        f'{f'Описание последней полученной ошибки - {url_data.get_status_explanation(status_code=url_object.last_error_status)}\n' if url_object.last_status not in (url_object.last_error_status, 0) else ''}'
-        f'{f'Время последней ошибки - {format_unix_utc_plus3(url_object.last_error_time)}\n\n' if url_object.last_error_time != url_object.last_checked else ''}'
+        f'{f'Последняя полученная ошибка - {url_object.last_error_status}\n' if url_object.last_error_status not in (url_object.last_status, 0) else ''}'
+        f'{f'{url_data.get_status_explanation(status_code=url_object.last_error_status)}\n' if url_object.last_error_status not in (url_object.last_status, 0) else ''}'
+        f'{f'Время последней ошибки - {format_unix_utc_plus3(url_object.last_error_time)}\n\n' if url_object.last_error_time not in (url_object.last_checked, 0) else ''}'
         f'{f'Время последнего успешного (200) статуса - {format_unix_utc_plus3(url_object.last_success_time) if url_object.last_success_time != 0 else 'Нет данных'}' if url_object.last_success_time not in (url_object.last_checked, 0) else ''}'
     )
     await callback.message.edit_text(
         response_text,
         reply_markup=get_single_link_operations_keyboard(url, next_from_id),
-        disable_web_page_preview=False
+        disable_web_page_preview=True
     )
 
 
@@ -48,6 +49,7 @@ async def retry_status_for(callback_query: CallbackQuery):
     url = callback_query.data[len(prefix):]
     links_object: LinksModel = await LinksDAO.find_one_or_none(url=url)
     await validate_data(links_object, user_bulk_id=callback_query.from_user.id)
+    await callback_query.answer()
 
 @commands_router.callback_query(F.data.startswith('delete_link:'))
 async def delete_link(callback_query: CallbackQuery):
@@ -58,5 +60,6 @@ async def delete_link(callback_query: CallbackQuery):
     await LinksDAO.cleanup_orphan_links()
     await callback_query.message.edit_text(
         f'Ссылка {url} удалена!',
-        reply_markup=back_to_links_actions_keyboard
+        reply_markup=back_to_links_actions_keyboard,
+        disable_web_page_preview=False
     )

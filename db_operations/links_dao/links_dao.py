@@ -113,7 +113,7 @@ class LinksDAO(BaseDao):
             raise
 
     @classmethod
-    async def get_user_links(cls, user_id: int) -> list[str]:
+    async def get_user_links(cls, user_id: int) -> list[LinksModel]:
         async with async_session_maker() as session:
             result = await session.execute(
                 select(cls.model.url)
