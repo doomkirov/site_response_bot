@@ -33,3 +33,11 @@ async def show_single_link(callback_query: CallbackQuery, next_from_id: int = 0)
     except Exception as e:
         await callback_query.answer()
         logger.warning(traceback.format_exc())
+
+@commands_router.callback_query(F.data.startswith('show_next_link_keyboard'))
+async def show_next_link(callback_query: CallbackQuery):
+    try:
+        next_from_id: int = int(callback_query.data.split(':')[-1])
+    except ValueError:
+        next_from_id: int = 0
+    await show_single_link(callback_query, next_from_id)

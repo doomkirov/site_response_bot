@@ -26,41 +26,40 @@ user_links_actions_keyboard = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 def create_links_keyboard(links: list, next_from_id: int = ROW_WIDTH_PARAMETER) -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup(row_width=ROW_WIDTH_PARAMETER, inline_keyboard=[])
-
     # Первый ряд
-    buttons = [[InlineKeyboardButton(text=url, callback_data=f"link_structure_url:{url}")] for url in links]
+    keyboard: list = [[list[InlineKeyboardButton]]]
+    buttons = [InlineKeyboardButton(text=url, callback_data=f"link_structure_url:{url}") for url in links]
 
     # Добавляем все кнопки одним вызовом
     # Второй ряд
     if buttons:
         for button in buttons:
-            keyboard.inline_keyboard.append(button)
+            keyboard.append(button)
     else:
-        keyboard.inline_keyboard.append(
+        keyboard.append(
             [InlineKeyboardButton(text="В начало", callback_data=f"show_next_link_keyboard:0")]
         )
 
     row = []
     if next_from_id > ROW_WIDTH_PARAMETER:
-        row.append([
+        row.append(
             InlineKeyboardButton(
                 text="Назад",
                 callback_data=f"show_next_link_keyboard:{next_from_id-ROW_WIDTH_PARAMETER}"
-            )]
+            )
         )
     if len(buttons) >= ROW_WIDTH_PARAMETER:
         row.append(InlineKeyboardButton(
             text="Далее",
             callback_data=f"show_next_link_keyboard:{next_from_id}"
         ))
-    keyboard.inline_keyboard.append(*row)
+    keyboard.append(*row)
 
     # Третий ряд (одна кнопка)
-    keyboard.inline_keyboard.append([
+    keyboard.append([
         InlineKeyboardButton(text="◀️ Назад к действиям со ссылками", callback_data='links_list_actions_for_user'),
     ])
-    return keyboard
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 def get_start_menu_keyboard(send_results: int) -> InlineKeyboardMarkup:
