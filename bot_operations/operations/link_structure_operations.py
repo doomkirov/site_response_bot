@@ -12,7 +12,7 @@ from db_operations.links_dao.links_dao import LinksDAO
 @commands_router.callback_query(F.data.startswith('link_structure_url:'))
 async def link_structure_url(callback: CallbackQuery):
     prefix = 'link_structure_url:'
-    url, next_from_id = callback.data[prefix:].split('~~|~~', 1)
+    url, next_from_id = callback.data[len(prefix):].split('~~|~~', 1)
     url_object: LinksModel = await LinksDAO.find_one_or_none(url=url)
     if not url_object:
         await callback.message.edit_text(

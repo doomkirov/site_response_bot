@@ -50,14 +50,14 @@ async def show_next_link(callback_query: CallbackQuery):
 @commands_router.callback_query(F.data.startswith('retry_status_for:'))
 async def retry_status_for(callback_query: CallbackQuery):
     prefix = 'retry_status_for:'
-    url = callback_query.data[prefix:]
+    url = callback_query.data[len(prefix):]
     links_object: LinksModel = await LinksDAO.find_one_or_none(url=url)
     await validate_data(links_object, user_bulk_id=callback_query.from_user.id)
 
 @commands_router.callback_query(F.data.startswith('delete_link:'))
 async def delete_link(callback_query: CallbackQuery):
     prefix = 'delete_link:'
-    url = callback_query.data[prefix:]
+    url = callback_query.data[len(prefix):]
     user_id = callback_query.from_user.id
     await UserDAO.delete_link(user_id=user_id, url=url)
     await LinksDAO.cleanup_orphan_links()
