@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_NAME: str
     BOT_TOKEN: str
+    ADMIN_USER_ID: int
 
     @property
     def db_url(self) -> str:

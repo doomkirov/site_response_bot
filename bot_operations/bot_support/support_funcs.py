@@ -1,5 +1,32 @@
 from urllib.parse import urlparse
 
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup
+
+from bot_operations.bot_support.keyboards import back_to_links_actions_keyboard
+
+
+async def send_by_parts(
+        callback: CallbackQuery,
+        text: str,
+        base_reply_markup: InlineKeyboardMarkup = back_to_links_actions_keyboard):
+    parts = split_text_by_limit(text=text)
+    if len(parts) == 1:
+        await callback.message.edit_text(
+            parts[0],
+            reply_markup=base_reply_markup,
+            disable_web_page_preview=True
+        )
+    else:
+        await callback.message.edit_text(parts.pop(0))
+        reply_markup = None
+        for i, part in enumerate(parts):
+            if i+1 == len(parts):
+                reply_markup = base_reply_markup
+            await callback.message.answer(
+                text=part,
+                reply_markup=reply_markup,
+                disable_web_page_preview=True
+            )
 
 def normalize_url(url: str) -> str:
     url = url.strip()  # убираем лишние пробелы

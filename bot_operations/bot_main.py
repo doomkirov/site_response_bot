@@ -7,10 +7,11 @@ from db_operations.all_models import UserModel
 from db_operations.user_dao.user_dao import UserDAO
 from settings.settings import settings
 from aiogram.fsm.storage.memory import MemoryStorage
-# 👇 Необходимы для работы диспатчера
+# 👇 Required imports for correct work of dispatcher
 from bot_operations.operations import (notifications, links_list_actions, # noqa
                                        single_link_actions, link_structure_operations) # noqa
-# расскомментить на случай тестов from app import tester  # noqa
+from bot_operations.operations.admin import admin_operations # noqa
+# for tests only from app import tester  # noqa
 
 bot = Bot(token=settings.BOT_TOKEN)
 
@@ -24,7 +25,7 @@ async def show_main_menu(message: Message):
     user: UserModel = await UserDAO.create_if_not_exists(id=user_id)
     await message.answer(
         'Выберите действие!',
-        reply_markup=get_start_menu_keyboard(user.send_results)
+        reply_markup=get_start_menu_keyboard(user.send_results, user_id)
     )
 
 
@@ -34,7 +35,7 @@ async def return_to_main_menu(callback: CallbackQuery):
     user: UserModel = await UserDAO.create_if_not_exists(id=user_id)
     await callback.message.edit_text(
         'Выберите действие!',
-        reply_markup=get_start_menu_keyboard(user.send_results),
+        reply_markup=get_start_menu_keyboard(user.send_results, user_id),
     )
 
 

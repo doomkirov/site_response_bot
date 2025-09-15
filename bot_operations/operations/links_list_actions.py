@@ -8,7 +8,7 @@ from bot_operations.bot_support.base_router import commands_router
 from bot_operations.bot_support.keyboards import user_links_actions_keyboard, back_to_links_actions_keyboard, \
     delete_all_links_keyboard
 from bot_operations.bot_support.states import LinkStates
-from bot_operations.bot_support.support_funcs import normalize_url, split_text_by_limit
+from bot_operations.bot_support.support_funcs import normalize_url, send_by_parts
 from db_operations.all_models import UserModel, LinksModel
 from db_operations.links_dao.links_dao import LinksDAO
 from db_operations.user_dao.user_dao import UserDAO
@@ -29,16 +29,16 @@ async def bad_links(callback: CallbackQuery):
         user_id = callback.from_user.id
         user_obj: UserModel  = await UserDAO.find_by_id(model_id=user_id)
         links: list[LinksModel] = user_obj.links
-        bad_links_list = []
+        bad_links_list: list[tuple[str, str]] = []
         for link in links:
             if link.last_status != 200:
-                bad_links_list.append(str(link.last_status))
+                bad_links_list.append((str(link.url), str(link.last_status)))
         if bad_links_list:
-            await callback.message.edit_text(
-                'Список всех сломанных ссылок:\n' + '\n'.join(bad_links_list),
-                reply_markup=back_to_links_actions_keyboard,
-                disable_web_page_preview=True
-            )
+            lines = []
+            for url, status in bad_links_list:
+                lines.append(f'Url: {url} - Статус: {status}')
+            text = 'Список всех сломанных ссылок:\n' + '\n'.join(lines)
+            await send_by_parts(callback=callback, text=text)
         else:
             await callback.message.edit_text(
                 'Все отслеживаемые ссылки имеют текущий статус 200',
@@ -67,24 +67,7 @@ async def show_all_links(callback: CallbackQuery):
     else:
         for url in links:
             text += f'\n{url}'
-    parts = split_text_by_limit(text=text)
-    if len(parts) == 1:
-        await callback.message.edit_text(
-            parts[0],
-            reply_markup=back_to_links_actions_keyboard,
-            disable_web_page_preview=True
-        )
-    else:
-        await callback.message.edit_text(parts.pop(0))
-        reply_markup = None
-        for i, part in enumerate(parts):
-            if i+1 == len(parts):
-                reply_markup = back_to_links_actions_keyboard
-            await callback.message.answer(
-                text=part,
-                reply_markup=reply_markup,
-                disable_web_page_preview=True
-            )
+    await send_by_parts(callback=callback, text=text)
 
 @commands_router.callback_query(F.data == 'delete_all_links')
 async def delete_all_links(callback: CallbackQuery):

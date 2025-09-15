@@ -45,6 +45,7 @@ jobs:
               -e DB_PASS=${{ secrets.DB_PASS }} \
               -e DB_NAME=${{ secrets.DB_NAME }} \
               -e BOT_TOKEN=${{ secrets.BOT_TOKEN }} \
+              -e ADMIN_USER_ID=${{ secrets.ADMIN_USER_ID }} \
               doomkirov/site_response_bot:latest alembic upgrade head
 
             docker run -d --name site_response_bot --restart on-failure:10 --network host \

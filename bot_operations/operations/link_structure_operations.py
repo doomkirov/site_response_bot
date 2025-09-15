@@ -61,5 +61,5 @@ async def delete_link(callback_query: CallbackQuery):
     await callback_query.message.edit_text(
         f'Ссылка {url} удалена!',
         reply_markup=back_to_links_actions_keyboard,
-        disable_web_page_preview=False
+        disable_web_page_preview=True
     )
