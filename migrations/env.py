@@ -1,18 +1,18 @@
-import sys, os
+import sys
+import os
 from logging.config import fileConfig
-from os.path import dirname, abspath
 
+from settings import Base, settings
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from db_operations.all_models import LinksModel # NOQA
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
-from settings.database import Base
-from db_operations.all_models import UserModel, LinksModel
-from settings.settings import settings
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

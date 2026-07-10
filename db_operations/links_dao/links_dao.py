@@ -1,12 +1,10 @@
-from typing import cast
-
-from sqlalchemy import select, delete, exists, and_, update
+from sqlalchemy import  update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from db_operations.base_dao import BaseDao
 from settings.database import async_session_maker
-from db_operations.all_models import LinksModel, user_links  # user_links — association Table
+from db_operations.all_models import LinksModel
 
 
 class LinksDAO(BaseDao):
@@ -29,54 +27,6 @@ class LinksDAO(BaseDao):
                 stmt = pg_insert(cls.model).values(docs).on_conflict_do_nothing(index_elements=["url"])
                 await session.execute(stmt)
                 await session.commit()
-            except SQLAlchemyError:
-                await session.rollback()
-                raise
-
-    @classmethod
-    async def remove_links(cls, links: list[str]) -> None:
-        """
-        Удаляет записи из таблицы links по url.
-        Если в схеме association 'user_links' задан ondelete='CASCADE', то связи у юзеров удалятся автоматически.
-        """
-        urls = list({l.strip() for l in links if l and l.strip()})
-        if not urls:
-            return
-
-        async with async_session_maker() as session:
-            try:
-                qry = delete(cls.model).where(cls.model.url.in_(urls))
-                await session.execute(qry)
-                await session.commit()
-            except SQLAlchemyError:
-                await session.rollback()
-                raise
-
-    @classmethod
-    async def cleanup_orphan_links(cls):
-        """
-        Удаляет все ссылки из таблицы links, которые не связаны ни с одним пользователем.
-        Если dry_run=True — не удаляет, а возвращает список (id, url), которые бы были удалены.
-        Возвращает список удалённых (или потенциально удаляемых) (id, url).
-        """
-        async with async_session_maker() as session:
-            try:
-                # условие: для каждой ссылки не существует записи в user_links с таким link_id
-                orphan_cond = (
-                    ~exists(
-                        select(user_links.c.link_id)
-                        .where(
-                            cast("ColumnElement[bool]", user_links.c.link_id == LinksModel.id)
-                        ))
-                )
-
-                del_stmt = (
-                    delete(LinksModel)
-                    .where(orphan_cond)
-                )
-                await session.execute(del_stmt)
-                await session.commit()
-
             except SQLAlchemyError:
                 await session.rollback()
                 raise
@@ -111,19 +61,3 @@ class LinksDAO(BaseDao):
                 return result.rowcount
         except SQLAlchemyError:
             raise
-
-    @classmethod
-    async def get_user_links(cls, user_id: int) -> list[LinksModel]:
-        async with async_session_maker() as session:
-            result = await session.execute(
-                select(cls.model.url)
-                .join(user_links, cls.model.id == user_links.c.link_id)
-                .where(
-                    cast(
-                        "ColumnElement[bool]",
-                        user_links.c.user_id == user_id
-                    )
-                )
-                .order_by(cls.model.id.desc())  # сортировка по id DESC
-            )
-            return result.scalars().all()

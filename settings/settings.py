@@ -8,8 +8,7 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
-    BOT_TOKEN: str
-    ADMIN_USER_ID: int
+    WEBHOOK_URL: str
 
     @property
     def db_url(self) -> str:

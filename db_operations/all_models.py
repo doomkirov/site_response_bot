@@ -1,36 +1,6 @@
-from sqlalchemy import Column, BigInteger, Integer, String, Table, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql.schema import UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, String, Text
 
 from settings.database import Base
-
-user_links = Table(
-    "user_links",
-    Base.metadata,
-    Column("user_id", BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
-    Column("link_id", Integer, ForeignKey("links.id", ondelete="CASCADE"), primary_key=True),
-    UniqueConstraint("user_id", "link_id", name="uq_user_link"),
-)
-
-
-class UserModel(Base):
-    __tablename__ = "users"
-
-    id = Column(BigInteger, primary_key=True)
-
-    links = relationship(
-        "LinksModel",
-        secondary=user_links,
-        back_populates="users",
-        lazy="selectin",
-        cascade="save-update",
-        order_by="LinksModel.id.desc()"
-    )
-
-    send_results = Column(Integer, default=0)
-
-    class Config:
-        orm_mode = True
 
 
 class LinksModel(Base):
@@ -45,12 +15,34 @@ class LinksModel(Base):
     last_error_time = Column(BigInteger, default=0)
     last_success_time = Column(BigInteger, default=0)
 
-    users = relationship(
-        "UserModel",
-        secondary=user_links,
-        back_populates="links",
-        lazy="selectin",
-    )
-
     class Config:
         orm_mode = True
+
+    def __str__(self):
+        return self.url
+
+
+class SiteIncidentModel(Base):
+    __tablename__ = "site_incidents"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    link_id = Column(Integer, ForeignKey("links.id", ondelete="CASCADE"), nullable=False, index=True)
+    url = Column(String, nullable=False)
+    started_at = Column(BigInteger, nullable=False, index=True)
+    status_code = Column(Integer, nullable=False)
+    description = Column(Text, nullable=False, default="")
+    confirmed_at = Column(BigInteger, nullable=True)
+    confirmed_status_code = Column(Integer, nullable=True)
+    confirmed_description = Column(Text, nullable=True)
+    alert_suppressed = Column(Boolean, nullable=False, default=False)
+    alert_sent_at = Column(BigInteger, nullable=True)
+    recovered_at = Column(BigInteger, nullable=True, index=True)
+    recovery_sent_at = Column(BigInteger, nullable=True)
+
+
+class DailyReportModel(Base):
+    __tablename__ = "daily_reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    report_date = Column(String, nullable=False, unique=True)
+    sent_at = Column(BigInteger, nullable=False)
