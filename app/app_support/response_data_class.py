@@ -76,17 +76,21 @@ class ResponseData:
         511: "Network Authentication Required — требуется сетевая аутентификация (например, captive portal).",
 
         # 9хх - кастомные ошибки от меня лично
-        900: "Статуса нет - Ошибка соединения\n\nSSL certificate validation failed: ",
-        901: "Статуса нет - Ошибка соединения\n\nSSL/TLS handshake error: ",
-        902: "Статуса нет - Ошибка соединения\n\nCertificate verification error: ",
-        903: "Статуса нет - Ошибка соединения\n\nТаймаут соединения - Подключение заняло больше 15 секунд, проверьте доступность сайта",
-        999: "Статуса нет - Ошибка соединения\n\nNetwork/connection error: ",
+        900: "Ошибка SSL-сертификата.",
+        901: "Ошибка SSL/TLS-соединения.",
+        902: "Ошибка проверки SSL-сертификата.",
+        903: "Таймаут соединения (более 15 секунд).",
+        999: "Ошибка соединения.",
     }
 
     def __init__(self, url: str, status_code: int, explanation: str = ''):
         self.url = url
         self.status_code: int = status_code
-        self.explanation = self.get_status_explanation() + explanation
+        # Технический текст исключения остаётся в логах. Для внутренних кодов
+        # пользователю показываем короткую и стабильную расшифровку.
+        self.explanation = self.get_status_explanation()
+        if 100 <= status_code <= 599 and explanation:
+            self.explanation += explanation
 
     # Пример простого helper'а:
     def get_status_explanation(self, status_code: int = 0) -> str:

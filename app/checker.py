@@ -18,6 +18,7 @@ from .utils import normalize_url
 
 logger = logging.getLogger(__name__)
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+INITIAL_ALERT_DELAY_SECONDS = 5 * 60
 
 
 def is_night_period(timestamp: int) -> bool:
@@ -95,13 +96,16 @@ async def validate_data(links_object: LinksModel):
         )
         logger.info("Открыт инцидент для %s; жду повторной проверки", data.url)
     elif not is_available:
-        confirmed = await IncidentsDAO.confirm_open_incident(
-            link_id=links_object.id,
-            confirmed_at=int(timestamp),
-            status_code=data.status_code,
-            description=data.explanation,
-            alert_suppressed=is_night_period(int(timestamp)),
-        )
+        incident = await IncidentsDAO.get_open_incident(links_object.id)
+        confirmed = None
+        if incident and timestamp - incident.started_at >= INITIAL_ALERT_DELAY_SECONDS:
+            confirmed = await IncidentsDAO.confirm_open_incident(
+                link_id=links_object.id,
+                confirmed_at=int(timestamp),
+                status_code=data.status_code,
+                description=data.explanation,
+                alert_suppressed=is_night_period(int(timestamp)),
+            )
         if confirmed:
             logger.info("Инцидент для %s подтверждён повторной ошибкой", data.url)
     elif not was_available and is_available:

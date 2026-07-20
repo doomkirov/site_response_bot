@@ -36,6 +36,7 @@ class SiteIncidentModel(Base):
     confirmed_description = Column(Text, nullable=True)
     alert_suppressed = Column(Boolean, nullable=False, default=False)
     alert_sent_at = Column(BigInteger, nullable=True)
+    reminder_sent_at = Column(BigInteger, nullable=True)
     recovered_at = Column(BigInteger, nullable=True, index=True)
     recovery_sent_at = Column(BigInteger, nullable=True)
 

@@ -3,40 +3,49 @@ from zoneinfo import ZoneInfo
 
 from app.checker import send_text_to_chat
 from db_operations.incidents_dao import DailyReportsDAO, IncidentsDAO
+from db_operations.links_dao.links_dao import LinksDAO
 
 
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
-NIGHT_START = time(hour=18)
-REPORT_TIME = time(hour=8)
+REPORT_TIME = time(hour=9)
 
 
 def _format_time(timestamp: int) -> str:
     return datetime.fromtimestamp(timestamp, tz=MOSCOW_TZ).strftime("%d.%m.%Y %H:%M:%S")
 
 
-def build_nightly_report_message(incidents, period_start: datetime, period_end: datetime) -> str:
+def _format_duration(started_at: int, recovered_at: int) -> str:
+    minutes = max(1, round((recovered_at - started_at) / 60))
+    return f"{minutes} мин."
+
+
+def build_nightly_report_message(links, incidents, period_start: datetime, period_end: datetime) -> str:
     header = (
         "[B]Отчёт по доступности сайтов[/B][BR]"
         f"Период: {period_start:%d.%m.%Y %H:%M} — {period_end:%d.%m.%Y %H:%M}"
     )
-    if not incidents:
-        return f"{header}[BR][BR]Проблем в этом периоде не было. Все сайты были доступны."
-
-    rows = [header, "", "[B]Зафиксированные проблемы:[/B]"]
+    incidents_by_link = {}
     for incident in incidents:
-        rows.append(
-            f"• [URL={incident.url}]{incident.url}[/URL] был недоступен с {_format_time(incident.started_at)}."
-        )
-        rows.append(f"  Код: {incident.status_code}. {incident.description}")
-        if incident.confirmed_status_code and incident.confirmed_status_code != incident.status_code:
+        incidents_by_link.setdefault(incident.link_id, []).append(incident)
+
+    rows = [header, ""]
+    period_end_timestamp = int(period_end.timestamp())
+    for link in links:
+        link_incidents = incidents_by_link.get(link.id, [])
+        if not link_incidents:
+            rows.append(f"• ✅ [URL={link.url}]{link.url}[/URL]")
+            continue
+
+        rows.append(f"• ❌ [URL={link.url}]{link.url}[/URL]")
+        for incident in link_incidents:
+            ended_at = min(incident.recovered_at or period_end_timestamp, period_end_timestamp)
+            started_at = max(incident.started_at, int(period_start.timestamp()))
+            status_code = incident.confirmed_status_code or incident.status_code
+            description = (incident.confirmed_description or incident.description).rstrip(".")
             rows.append(
-                f"  Повторная проверка: {incident.confirmed_status_code}. "
-                f"{incident.confirmed_description}"
+                f"  Код: {status_code}. {description} Недоступен {_format_duration(started_at, ended_at)}, "
+                f"с {_format_time(started_at)} по {_format_time(ended_at)}."
             )
-        if incident.recovered_at is None or incident.recovered_at > int(period_end.timestamp()):
-            rows.append("  На момент отчёта сайт всё ещё недоступен.")
-        else:
-            rows.append(f"  Доступность восстановлена в {_format_time(incident.recovered_at)}.")
     return "[BR]".join(rows)
 
 
@@ -49,12 +58,14 @@ async def send_nightly_report_if_due(now: datetime | None = None) -> bool:
     if await DailyReportsDAO.was_sent(report_date):
         return False
 
-    period_start = datetime.combine(report_date - timedelta(days=1), NIGHT_START, tzinfo=MOSCOW_TZ)
+    period_end = datetime.combine(report_date, REPORT_TIME, tzinfo=MOSCOW_TZ)
+    period_start = period_end - timedelta(days=1)
     incidents = await IncidentsDAO.get_incidents_for_period(
         int(period_start.timestamp()),
-        int(now.timestamp()),
+        int(period_end.timestamp()),
     )
-    message = build_nightly_report_message(incidents, period_start, now)
+    links = await LinksDAO.find_all()
+    message = build_nightly_report_message(links, incidents, period_start, period_end)
     if not await send_text_to_chat(message):
         return False
 

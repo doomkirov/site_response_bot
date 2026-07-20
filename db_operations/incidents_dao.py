@@ -9,6 +9,16 @@ from settings.database import async_session_maker
 
 class IncidentsDAO:
     @staticmethod
+    async def get_open_incident(link_id: int) -> SiteIncidentModel | None:
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(SiteIncidentModel)
+                .where(SiteIncidentModel.link_id == link_id, SiteIncidentModel.recovered_at.is_(None))
+                .order_by(SiteIncidentModel.started_at.desc())
+            )
+            return result.scalar_one_or_none()
+
+    @staticmethod
     async def open_incident(**data) -> SiteIncidentModel | None:
         async with async_session_maker() as session:
             existing = await session.execute(
@@ -77,6 +87,31 @@ class IncidentsDAO:
                 )
             )
             return list(result.scalars().all())
+
+    @staticmethod
+    async def get_pending_reminders(timestamp: int, delay_seconds: int) -> list[SiteIncidentModel]:
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(SiteIncidentModel).where(
+                    SiteIncidentModel.started_at <= timestamp - delay_seconds,
+                    SiteIncidentModel.alert_sent_at.is_not(None),
+                    SiteIncidentModel.reminder_sent_at.is_(None),
+                    SiteIncidentModel.recovered_at.is_(None),
+                )
+            )
+            return list(result.scalars().all())
+
+    @staticmethod
+    async def mark_reminders_sent(incident_ids: list[int], sent_at: int) -> None:
+        if not incident_ids:
+            return
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(SiteIncidentModel).where(SiteIncidentModel.id.in_(incident_ids))
+            )
+            for incident in result.scalars():
+                incident.reminder_sent_at = sent_at
+            await session.commit()
 
     @staticmethod
     async def mark_alerts_sent(incident_ids: list[int], sent_at: int) -> None:
